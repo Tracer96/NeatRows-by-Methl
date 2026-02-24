@@ -93,8 +93,8 @@ function NeatRows:Refresh()
   NeatRows_SortFilter:ApplySort(filtered, self.state.sortMode)
   NeatRows_UI:LayoutGrid(self, filtered)
 
-  if self.ui and self.ui.moneyText then
-    self.ui.moneyText:SetText(NeatRows_UI:FormatMoney(GetMoney and GetMoney() or 0))
+  if self.ui and self.ui.moneyDisplay then
+    NeatRows_UI:UpdateMoneyDisplay(self.ui.moneyDisplay, GetMoney and GetMoney() or 0)
   end
 end
 
@@ -150,8 +150,8 @@ eventFrame:SetScript("OnEvent", function()
       NeatRows:QueueRefresh("bag")
     end
   elseif event == "PLAYER_MONEY" then
-    if NeatRows.ui and NeatRows.ui.moneyText then
-      NeatRows.ui.moneyText:SetText(NeatRows_UI:FormatMoney(GetMoney and GetMoney() or 0))
+    if NeatRows.ui and NeatRows.ui.moneyDisplay then
+      NeatRows_UI:UpdateMoneyDisplay(NeatRows.ui.moneyDisplay, GetMoney and GetMoney() or 0)
     end
   end
 end)
