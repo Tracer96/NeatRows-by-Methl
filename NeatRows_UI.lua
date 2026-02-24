@@ -160,13 +160,32 @@ function NeatRows:CreateMainFrame()
     header:SetBackdropColor(UI.colors.headerBg[1], UI.colors.headerBg[2], UI.colors.headerBg[3], UI.colors.headerBg[4])
   end
 
+  -- Helper: create a 2-pixel gold trim texture (horizontal or vertical)
+  local function MakeGoldTrim(parent, isVertical)
+    local t = parent:CreateTexture(nil, "OVERLAY")
+    t:SetTexture("Interface\\Buttons\\WHITE8X8")
+    if isVertical then t:SetWidth(2) else t:SetHeight(2) end
+    t:SetVertexColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], UI.colors.gold[4])
+    return t
+  end
+
   -- Gold trim line at header bottom
-  local headerLine = header:CreateTexture(nil, "OVERLAY")
-  headerLine:SetTexture("Interface\\Buttons\\WHITE8X8")
-  headerLine:SetHeight(2)
-  headerLine:SetVertexColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], UI.colors.gold[4])
+  local headerLine = MakeGoldTrim(header, false)
   headerLine:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
   headerLine:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
+
+  -- Gold trim: top, left, right of header (full gold frame around header bar)
+  local headerTopLine = MakeGoldTrim(header, false)
+  headerTopLine:SetPoint("TOPLEFT", header, "TOPLEFT", 0, 0)
+  headerTopLine:SetPoint("TOPRIGHT", header, "TOPRIGHT", 0, 0)
+
+  local headerLeftLine = MakeGoldTrim(header, true)
+  headerLeftLine:SetPoint("TOPLEFT", header, "TOPLEFT", 0, 0)
+  headerLeftLine:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
+
+  local headerRightLine = MakeGoldTrim(header, true)
+  headerRightLine:SetPoint("TOPRIGHT", header, "TOPRIGHT", 0, 0)
+  headerRightLine:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
 
   -- Drag area (invisible button over header, leaves room for close button)
   local dragArea = CreateFrame("Button", nil, header)
@@ -185,6 +204,15 @@ function NeatRows:CreateMainFrame()
     NeatRows:SaveFramePosition()
   end)
 
+  -- Subtle gold glow behind title area for depth and readability
+  local titleGlow = header:CreateTexture(nil, "ARTWORK")
+  titleGlow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+  titleGlow:SetBlendMode("ADD")
+  titleGlow:SetWidth(250)
+  titleGlow:SetHeight(58)
+  titleGlow:SetPoint("CENTER", header, "CENTER", 0, 4)
+  titleGlow:SetVertexColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], 0.18)
+
   local title = CreateShadowedText(header, "GameFontNormalLarge")
   title:SetText("|cffffd700NeatRows|r")
   title:SetPoint("CENTER", header, "CENTER", 0, 8)
@@ -198,10 +226,6 @@ function NeatRows:CreateMainFrame()
   local moneyDisplay = UI:CreateMoneyDisplay(header)
   moneyDisplay:SetPoint("RIGHT", header, "RIGHT", -38, 0)
   UI:UpdateMoneyDisplay(moneyDisplay, GetMoney and GetMoney() or 0)
-
-  local divider = UI:CreateDivider(f)
-  divider:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -68)
-  divider:SetPoint("TOPRIGHT", f, "TOPRIGHT", -14, -68)
 
   -- Close button (small, subtle)
   local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
@@ -235,16 +259,34 @@ function NeatRows:CreateMainFrame()
     NeatRows:QueueRefresh("resize")
   end)
 
-  -- Toolbar
-  local toolbar = self:CreateToolbar(f)
-  toolbar:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -72)
-  toolbar:SetPoint("TOPRIGHT", f, "TOPRIGHT", -14, -72)
+  -- Controls strip panel (dark background + gold trim border)
+  local toolbarPanel = CreateFrame("Frame", nil, f)
+  toolbarPanel:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -68)
+  toolbarPanel:SetPoint("TOPRIGHT", f, "TOPRIGHT", -8, -68)
+  toolbarPanel:SetHeight(48)
+  UI:ApplyBackdrop(toolbarPanel, 0.88)
+  if toolbarPanel.SetBackdropBorderColor then
+    toolbarPanel:SetBackdropBorderColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], 0.45)
+  end
+
+  local toolbar = self:CreateToolbar(toolbarPanel)
+  toolbar:SetPoint("TOPLEFT", toolbarPanel, "TOPLEFT", 8, -6)
+  toolbar:SetPoint("TOPRIGHT", toolbarPanel, "TOPRIGHT", -8, -6)
 
   -- Tabs container
   local tabsHost = CreateFrame("Frame", nil, f)
-  tabsHost:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, -10)
-  tabsHost:SetPoint("TOPRIGHT", toolbar, "BOTTOMRIGHT", 0, -10)
+  tabsHost:SetPoint("TOPLEFT", toolbarPanel, "BOTTOMLEFT", 0, -8)
+  tabsHost:SetPoint("TOPRIGHT", toolbarPanel, "BOTTOMRIGHT", 0, -8)
   tabsHost:SetHeight(60)
+
+  -- Grid area panel (dark background + gold trim, rendered below scroll content)
+  local gridPanel = CreateFrame("Frame", nil, f)
+  gridPanel:SetPoint("TOPLEFT", tabsHost, "BOTTOMLEFT", 0, -4)
+  gridPanel:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
+  UI:ApplyBackdrop(gridPanel, 0.82)
+  if gridPanel.SetBackdropBorderColor then
+    gridPanel:SetBackdropBorderColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], 0.35)
+  end
 
   -- Scroll area
   local scrollFrame = CreateFrame("ScrollFrame", "NeatRowsScrollFrame", f, "UIPanelScrollFrameTemplate")
