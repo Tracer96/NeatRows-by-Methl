@@ -12,9 +12,9 @@ end
 
 local DB_DEFAULTS = {
   pos          = { point = "CENTER", relPoint = "CENTER", x = 0, y = 0 },
-  size         = { w = 760, h = 560 },
-  buttonSize   = 36,
-  padding      = 6,
+  size         = { w = 640, h = 460 },
+  buttonSize   = 32,
+  padding      = 4,
   maxTabsPerRow = 6,
   showEmptyTabs = false,
   lockFrame    = false,
