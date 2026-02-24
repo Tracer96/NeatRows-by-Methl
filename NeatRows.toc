@@ -1,0 +1,11 @@
+## Interface: 11200
+## Title: NeatRows
+## Notes: Bag addon for Vanilla 1.12 / Turtle WoW by Methl
+## Author: Methl
+## Version: 1.0
+## SavedVariables: NeatRowsDB
+
+NeatRows.lua
+NeatRows_Data.lua
+NeatRows_SortFilter.lua
+NeatRows_UI.lua
