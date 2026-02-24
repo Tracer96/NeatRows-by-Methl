@@ -81,6 +81,20 @@ function SF:ApplySort(items, mode)
       if an ~= bn then return an < bn end
       return stableTie(a, b)
 
+    elseif mode == "STACK" then
+      -- Group identical items (same itemID) together.
+      -- Items with the same itemID always share the same name in WoW,
+      -- so sorting by name produces the same grouping in alphabetical order.
+      local aid = a.itemID or 0
+      local bid = b.itemID or 0
+      if aid ~= bid then
+        local an = lower(a.name)
+        local bn = lower(b.name)
+        if an ~= bn then return an < bn end
+        return aid < bid
+      end
+      return stableTie(a, b)
+
     else -- QUALITY
       local aq = a.quality or 1
       local bq = b.quality or 1

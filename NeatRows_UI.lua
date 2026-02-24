@@ -45,45 +45,48 @@ end
 
 function UI:CreateMoneyDisplay(parent)
   local frame = CreateFrame("Frame", nil, parent)
-  frame:SetWidth(175)
-  frame:SetHeight(18)
+  frame:SetWidth(150)
+  frame:SetHeight(14)
 
   -- Copper (rightmost)
   local copperIcon = frame:CreateTexture(nil, "ARTWORK")
-  copperIcon:SetWidth(14); copperIcon:SetHeight(14)
+  copperIcon:SetWidth(12); copperIcon:SetHeight(12)
   copperIcon:SetTexture("Interface\\MoneyFrame\\UI-CopperIcon")
-  copperIcon:SetPoint("RIGHT", frame, "RIGHT", -2, 0)
+  copperIcon:SetPoint("RIGHT", frame, "RIGHT", 0, 0)
 
   local copperText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   copperText:SetShadowColor(0, 0, 0, 0.85); copperText:SetShadowOffset(1, -1)
   copperText:SetTextColor(0.90, 0.75, 0.60, 1.0)
-  copperText:SetPoint("RIGHT", copperIcon, "LEFT", -2, 1)
+  copperText:SetPoint("RIGHT", copperIcon, "LEFT", -1, 1)
 
   -- Silver
   local silverIcon = frame:CreateTexture(nil, "ARTWORK")
-  silverIcon:SetWidth(14); silverIcon:SetHeight(14)
+  silverIcon:SetWidth(12); silverIcon:SetHeight(12)
   silverIcon:SetTexture("Interface\\MoneyFrame\\UI-SilverIcon")
-  silverIcon:SetPoint("RIGHT", copperText, "LEFT", -6, 0)
+  silverIcon:SetPoint("RIGHT", copperText, "LEFT", -4, 0)
 
   local silverText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   silverText:SetShadowColor(0, 0, 0, 0.85); silverText:SetShadowOffset(1, -1)
   silverText:SetTextColor(0.85, 0.85, 0.85, 1.0)
-  silverText:SetPoint("RIGHT", silverIcon, "LEFT", -2, 1)
+  silverText:SetPoint("RIGHT", silverIcon, "LEFT", -1, 1)
 
   -- Gold (leftmost)
   local goldIcon = frame:CreateTexture(nil, "ARTWORK")
-  goldIcon:SetWidth(14); goldIcon:SetHeight(14)
+  goldIcon:SetWidth(12); goldIcon:SetHeight(12)
   goldIcon:SetTexture("Interface\\MoneyFrame\\UI-GoldIcon")
-  goldIcon:SetPoint("RIGHT", silverText, "LEFT", -6, 0)
+  goldIcon:SetPoint("RIGHT", silverText, "LEFT", -4, 0)
 
   local goldText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   goldText:SetShadowColor(0, 0, 0, 0.85); goldText:SetShadowOffset(1, -1)
   goldText:SetTextColor(0.95, 0.80, 0.30, 1.0)
-  goldText:SetPoint("RIGHT", goldIcon, "LEFT", -2, 1)
+  goldText:SetPoint("RIGHT", goldIcon, "LEFT", -1, 1)
 
   frame.goldText   = goldText
   frame.silverText = silverText
   frame.copperText = copperText
+  frame.goldIcon   = goldIcon
+  frame.silverIcon = silverIcon
+  frame.copperIcon = copperIcon
   return frame
 end
 
@@ -92,8 +95,27 @@ function UI:UpdateMoneyDisplay(moneyDisplay, money)
   local gold   = floor(money / 10000)
   local silver = floor((money - gold * 10000) / 100)
   local copper = money - gold * 10000 - silver * 100
-  moneyDisplay.goldText:SetText(gold)
-  moneyDisplay.silverText:SetText(silver)
+
+  -- Hide gold row when zero
+  if gold > 0 then
+    moneyDisplay.goldText:SetText(gold)
+    moneyDisplay.goldText:Show()
+    moneyDisplay.goldIcon:Show()
+  else
+    moneyDisplay.goldText:Hide()
+    moneyDisplay.goldIcon:Hide()
+  end
+
+  -- Hide silver row when zero and no gold
+  if silver > 0 or gold > 0 then
+    moneyDisplay.silverText:SetText(silver)
+    moneyDisplay.silverText:Show()
+    moneyDisplay.silverIcon:Show()
+  else
+    moneyDisplay.silverText:Hide()
+    moneyDisplay.silverIcon:Hide()
+  end
+
   moneyDisplay.copperText:SetText(copper)
 end
 
@@ -134,10 +156,10 @@ function NeatRows:CreateMainFrame()
     f:SetBackdropBorderColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], 0.85)
   end
 
-  f:SetMinResize(520, 420)
+  f:SetMinResize(480, 360)
 
-  local w = db.size.w or 760
-  local h = db.size.h or 560
+  local w = db.size.w or 640
+  local h = db.size.h or 460
   f:SetWidth(w)
   f:SetHeight(h)
 
@@ -150,7 +172,7 @@ function NeatRows:CreateMainFrame()
   local header = CreateFrame("Frame", nil, f)
   header:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
   header:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
-  header:SetHeight(62)
+  header:SetHeight(40)
   if header.SetBackdrop then
     header:SetBackdrop({
       bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -208,28 +230,23 @@ function NeatRows:CreateMainFrame()
   local titleGlow = header:CreateTexture(nil, "ARTWORK")
   titleGlow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
   titleGlow:SetBlendMode("ADD")
-  titleGlow:SetWidth(250)
-  titleGlow:SetHeight(58)
-  titleGlow:SetPoint("CENTER", header, "CENTER", 0, 4)
+  titleGlow:SetWidth(200)
+  titleGlow:SetHeight(40)
+  titleGlow:SetPoint("CENTER", header, "CENTER", 0, 0)
   titleGlow:SetVertexColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], 0.18)
 
-  local title = CreateShadowedText(header, "GameFontNormalLarge")
-  title:SetText("|cffffd700NeatRows|r")
-  title:SetPoint("CENTER", header, "CENTER", 0, 8)
-
-  local subtitle = CreateShadowedText(header, "GameFontHighlightSmall")
-  subtitle:SetText("by Methl")
-  subtitle:SetTextColor(0.70, 0.70, 0.70, 0.90)
-  subtitle:SetPoint("TOP", title, "BOTTOM", 0, -1)
+  local title = CreateShadowedText(header, "GameFontNormal")
+  title:SetText("|cffffd700NeatRows|r  |cff9a9a9aby Methl|r")
+  title:SetPoint("CENTER", header, "CENTER", 0, 0)
 
   -- Money display (icon + number for gold/silver/copper)
   local moneyDisplay = UI:CreateMoneyDisplay(header)
-  moneyDisplay:SetPoint("RIGHT", header, "RIGHT", -38, 0)
+  moneyDisplay:SetPoint("RIGHT", header, "RIGHT", -32, 0)
   UI:UpdateMoneyDisplay(moneyDisplay, GetMoney and GetMoney() or 0)
 
   -- Close button (small, subtle)
   local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-  close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -6, -6)
+  close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -2, -4)
   close:SetScript("OnClick", function() f:Hide() end)
 
   -- Resize grip
@@ -252,8 +269,8 @@ function NeatRows:CreateMainFrame()
     -- Clamp size to screen
     local maxW = UIParent:GetWidth() - 60
     local maxH = UIParent:GetHeight() - 60
-    local nw = NR_Clamp(f:GetWidth(), 520, maxW)
-    local nh = NR_Clamp(f:GetHeight(), 420, maxH)
+    local nw = NR_Clamp(f:GetWidth(), 480, maxW)
+    local nh = NR_Clamp(f:GetHeight(), 360, maxH)
     f:SetWidth(nw); f:SetHeight(nh)
     NeatRows:SaveFrameSize()
     NeatRows:QueueRefresh("resize")
@@ -261,27 +278,27 @@ function NeatRows:CreateMainFrame()
 
   -- Controls strip panel (dark background + gold trim border)
   local toolbarPanel = CreateFrame("Frame", nil, f)
-  toolbarPanel:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -68)
-  toolbarPanel:SetPoint("TOPRIGHT", f, "TOPRIGHT", -8, -68)
-  toolbarPanel:SetHeight(48)
+  toolbarPanel:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -46)
+  toolbarPanel:SetPoint("TOPRIGHT", f, "TOPRIGHT", -8, -46)
+  toolbarPanel:SetHeight(36)
   UI:ApplyBackdrop(toolbarPanel, 0.88)
   if toolbarPanel.SetBackdropBorderColor then
     toolbarPanel:SetBackdropBorderColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], 0.45)
   end
 
   local toolbar = self:CreateToolbar(toolbarPanel)
-  toolbar:SetPoint("TOPLEFT", toolbarPanel, "TOPLEFT", 8, -6)
-  toolbar:SetPoint("TOPRIGHT", toolbarPanel, "TOPRIGHT", -8, -6)
+  toolbar:SetPoint("TOPLEFT", toolbarPanel, "TOPLEFT", 6, -4)
+  toolbar:SetPoint("TOPRIGHT", toolbarPanel, "TOPRIGHT", -6, -4)
 
   -- Tabs container
   local tabsHost = CreateFrame("Frame", nil, f)
-  tabsHost:SetPoint("TOPLEFT", toolbarPanel, "BOTTOMLEFT", 0, -8)
-  tabsHost:SetPoint("TOPRIGHT", toolbarPanel, "BOTTOMRIGHT", 0, -8)
-  tabsHost:SetHeight(60)
+  tabsHost:SetPoint("TOPLEFT", toolbarPanel, "BOTTOMLEFT", 0, -4)
+  tabsHost:SetPoint("TOPRIGHT", toolbarPanel, "BOTTOMRIGHT", 0, -4)
+  tabsHost:SetHeight(20)
 
   -- Grid area panel (dark background + gold trim, rendered below scroll content)
   local gridPanel = CreateFrame("Frame", nil, f)
-  gridPanel:SetPoint("TOPLEFT", tabsHost, "BOTTOMLEFT", 0, -4)
+  gridPanel:SetPoint("TOPLEFT", tabsHost, "BOTTOMLEFT", 0, -2)
   gridPanel:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
   UI:ApplyBackdrop(gridPanel, 0.82)
   if gridPanel.SetBackdropBorderColor then
@@ -290,7 +307,7 @@ function NeatRows:CreateMainFrame()
 
   -- Scroll area
   local scrollFrame = CreateFrame("ScrollFrame", "NeatRowsScrollFrame", f, "UIPanelScrollFrameTemplate")
-  scrollFrame:SetPoint("TOPLEFT", tabsHost, "BOTTOMLEFT", 0, -8)
+  scrollFrame:SetPoint("TOPLEFT", tabsHost, "BOTTOMLEFT", 0, -4)
   scrollFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -30, 14)
 
   local content = CreateFrame("Frame", nil, scrollFrame)
@@ -338,12 +355,12 @@ end
 
 function NeatRows:CreateToolbar(parent)
   local bar = CreateFrame("Frame", nil, parent)
-  bar:SetHeight(36)
+  bar:SetHeight(28)
 
   -- Search box
   local searchBG = CreateFrame("Frame", nil, bar)
-  searchBG:SetWidth(240)
-  searchBG:SetHeight(28)
+  searchBG:SetWidth(200)
+  searchBG:SetHeight(22)
   searchBG:SetPoint("LEFT", bar, "LEFT", 0, 0)
   UI:ApplyBackdrop(searchBG, 0.90)
   searchBG:SetBackdropBorderColor(0.22, 0.22, 0.22, 0.95)
@@ -351,8 +368,8 @@ function NeatRows:CreateToolbar(parent)
   local eb = CreateFrame("EditBox", nil, searchBG)
   eb:SetFontObject(GameFontHighlightSmall)
   eb:SetAutoFocus(false)
-  eb:SetTextInsets(8, 22, 0, 0)
-  eb:SetHeight(28)
+  eb:SetTextInsets(8, 20, 0, 0)
+  eb:SetHeight(22)
   eb:SetPoint("TOPLEFT", searchBG, "TOPLEFT", 0, 0)
   eb:SetPoint("BOTTOMRIGHT", searchBG, "BOTTOMRIGHT", 0, 0)
 
@@ -362,8 +379,8 @@ function NeatRows:CreateToolbar(parent)
   placeholder:SetPoint("LEFT", searchBG, "LEFT", 10, 0)
 
   local clear = CreateFrame("Button", nil, searchBG)
-  clear:SetWidth(18); clear:SetHeight(18)
-  clear:SetPoint("RIGHT", searchBG, "RIGHT", -6, 0)
+  clear:SetWidth(16); clear:SetHeight(16)
+  clear:SetPoint("RIGHT", searchBG, "RIGHT", -4, 0)
 
   local xTex = clear:CreateTexture(nil, "OVERLAY")
   xTex:SetAllPoints(clear)
@@ -409,12 +426,13 @@ function NeatRows:CreateToolbar(parent)
   sortText:SetPoint("CENTER", sortBtn, "CENTER", 0, 0)
   sortText:SetText("Sort: Quality")
 
-  local sortModes = { "QUALITY", "NAME", "QUANTITY", "TYPE" }
+  local sortModes = { "QUALITY", "NAME", "QUANTITY", "TYPE", "STACK" }
   local sortLabels = {
-    QUALITY = "Quality",
-    NAME = "Name",
+    QUALITY  = "Quality",
+    NAME     = "Name",
     QUANTITY = "Quantity",
-    TYPE = "Type",
+    TYPE     = "Type",
+    STACK    = "Stacked",
   }
 
   sortBtn:SetScript("OnClick", function()
