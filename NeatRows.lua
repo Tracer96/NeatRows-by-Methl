@@ -163,3 +163,28 @@ SLASH_NEATROWS2 = "/neatrows"
 SlashCmdList["NEATROWS"] = function(msg)
   NeatRows:Toggle()
 end
+
+-- --------------------------------------------------------- bag key hooks ---
+-- Hook OpenAllBags / CloseAllBags so pressing B opens/closes NeatRows
+-- instead of the default bag frames (Vanilla 1.12 compatible).
+
+function OpenAllBags()
+  if NeatRows.frame then
+    NeatRows.frame:Show()
+  end
+end
+
+function CloseAllBags()
+  if NeatRows.frame then
+    NeatRows.frame:Hide()
+  end
+end
+
+-- ToggleBag is called when a bag-bar slot is clicked; route it through
+-- NeatRows:Toggle() so the custom frame opens/closes as expected.
+-- The bag id parameter is intentionally ignored; we manage a single window.
+function ToggleBag()
+  if NeatRows.frame then
+    NeatRows:Toggle()
+  end
+end
