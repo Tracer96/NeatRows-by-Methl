@@ -10,6 +10,9 @@ UI.colors = {
   border = {0.25, 0.25, 0.25, 0.95},
   divider = {1, 1, 1, 0.10},
 
+  gold = {0.75, 0.60, 0.20, 0.90},
+  headerBg = {0.03, 0.03, 0.03, 0.98},
+
   tabActiveBorder = {0.85, 0.70, 0.25, 0.95},
   tabInactiveBorder = {0.28, 0.28, 0.28, 0.95},
   tabActiveBg = {0.10, 0.10, 0.10, 0.96},
@@ -38,6 +41,60 @@ function UI:CreateDivider(parent)
   tex:SetTexCoord(0, 1, 0, 1)
   tex:SetVertexColor(1, 1, 1, 0.55)
   return tex
+end
+
+function UI:CreateMoneyDisplay(parent)
+  local frame = CreateFrame("Frame", nil, parent)
+  frame:SetWidth(175)
+  frame:SetHeight(18)
+
+  -- Copper (rightmost)
+  local copperIcon = frame:CreateTexture(nil, "ARTWORK")
+  copperIcon:SetWidth(14); copperIcon:SetHeight(14)
+  copperIcon:SetTexture("Interface\\MoneyFrame\\UI-CopperIcon")
+  copperIcon:SetPoint("RIGHT", frame, "RIGHT", -2, 0)
+
+  local copperText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  copperText:SetShadowColor(0, 0, 0, 0.85); copperText:SetShadowOffset(1, -1)
+  copperText:SetTextColor(0.90, 0.75, 0.60, 1.0)
+  copperText:SetPoint("RIGHT", copperIcon, "LEFT", -2, 1)
+
+  -- Silver
+  local silverIcon = frame:CreateTexture(nil, "ARTWORK")
+  silverIcon:SetWidth(14); silverIcon:SetHeight(14)
+  silverIcon:SetTexture("Interface\\MoneyFrame\\UI-SilverIcon")
+  silverIcon:SetPoint("RIGHT", copperText, "LEFT", -6, 0)
+
+  local silverText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  silverText:SetShadowColor(0, 0, 0, 0.85); silverText:SetShadowOffset(1, -1)
+  silverText:SetTextColor(0.85, 0.85, 0.85, 1.0)
+  silverText:SetPoint("RIGHT", silverIcon, "LEFT", -2, 1)
+
+  -- Gold (leftmost)
+  local goldIcon = frame:CreateTexture(nil, "ARTWORK")
+  goldIcon:SetWidth(14); goldIcon:SetHeight(14)
+  goldIcon:SetTexture("Interface\\MoneyFrame\\UI-GoldIcon")
+  goldIcon:SetPoint("RIGHT", silverText, "LEFT", -6, 0)
+
+  local goldText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  goldText:SetShadowColor(0, 0, 0, 0.85); goldText:SetShadowOffset(1, -1)
+  goldText:SetTextColor(0.95, 0.80, 0.30, 1.0)
+  goldText:SetPoint("RIGHT", goldIcon, "LEFT", -2, 1)
+
+  frame.goldText   = goldText
+  frame.silverText = silverText
+  frame.copperText = copperText
+  return frame
+end
+
+function UI:UpdateMoneyDisplay(moneyDisplay, money)
+  money = money or 0
+  local gold   = floor(money / 10000)
+  local silver = floor((money - gold * 10000) / 100)
+  local copper = money - gold * 10000 - silver * 100
+  moneyDisplay.goldText:SetText(gold)
+  moneyDisplay.silverText:SetText(silver)
+  moneyDisplay.copperText:SetText(copper)
 end
 
 function UI:FormatMoney(money)
@@ -73,6 +130,9 @@ function NeatRows:CreateMainFrame()
   f:EnableMouse(true)
 
   UI:ApplyBackdrop(f)
+  if f.SetBackdropBorderColor then
+    f:SetBackdropBorderColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], 0.85)
+  end
 
   f:SetMinResize(520, 420)
 
@@ -86,41 +146,62 @@ function NeatRows:CreateMainFrame()
 
   f:Hide()
 
-  -- Header (drag region)
-  local header = CreateFrame("Button", nil, f)
-  header:SetHeight(56)
-  header:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -10)
-  header:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -10)
-  header:EnableMouse(true)
+  -- Header bar (full-width dark panel with gold bottom trim)
+  local header = CreateFrame("Frame", nil, f)
+  header:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
+  header:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
+  header:SetHeight(62)
+  if header.SetBackdrop then
+    header:SetBackdrop({
+      bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+      tile = true, tileSize = 32, edgeSize = 0,
+      insets = { left = 0, right = 0, top = 0, bottom = 0 }
+    })
+    header:SetBackdropColor(UI.colors.headerBg[1], UI.colors.headerBg[2], UI.colors.headerBg[3], UI.colors.headerBg[4])
+  end
 
-  header:SetScript("OnMouseDown", function()
+  -- Gold trim line at header bottom
+  local headerLine = header:CreateTexture(nil, "OVERLAY")
+  headerLine:SetTexture("Interface\\Buttons\\WHITE8X8")
+  headerLine:SetHeight(2)
+  headerLine:SetVertexColor(UI.colors.gold[1], UI.colors.gold[2], UI.colors.gold[3], UI.colors.gold[4])
+  headerLine:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 0, 0)
+  headerLine:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 0, 0)
+
+  -- Drag area (invisible button over header, leaves room for close button)
+  local dragArea = CreateFrame("Button", nil, header)
+  dragArea:SetPoint("TOPLEFT", header, "TOPLEFT", 0, 0)
+  dragArea:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", -30, 0)
+  dragArea:EnableMouse(true)
+
+  dragArea:SetScript("OnMouseDown", function()
     if NeatRows.db.lockFrame then return end
     if arg1 == "LeftButton" then
       f:StartMoving()
     end
   end)
-  header:SetScript("OnMouseUp", function()
+  dragArea:SetScript("OnMouseUp", function()
     f:StopMovingOrSizing()
     NeatRows:SaveFramePosition()
   end)
 
   local title = CreateShadowedText(header, "GameFontNormalLarge")
-  title:SetText("NeatRows")
-  title:SetPoint("TOP", header, "TOP", 0, 2)
+  title:SetText("|cffffd700NeatRows|r")
+  title:SetPoint("CENTER", header, "CENTER", 0, 8)
 
   local subtitle = CreateShadowedText(header, "GameFontHighlightSmall")
   subtitle:SetText("by Methl")
-  subtitle:SetTextColor(0.80, 0.80, 0.80, 0.95)
-  subtitle:SetPoint("TOP", title, "BOTTOM", 0, -2)
+  subtitle:SetTextColor(0.70, 0.70, 0.70, 0.90)
+  subtitle:SetPoint("TOP", title, "BOTTOM", 0, -1)
 
-  local moneyText = CreateShadowedText(header, "GameFontHighlightSmall")
-  moneyText:SetPoint("RIGHT", header, "RIGHT", -4, 0)
-  moneyText:SetJustifyH("RIGHT")
-  moneyText:SetText(UI:FormatMoney(GetMoney and GetMoney() or 0))
+  -- Money display (icon + number for gold/silver/copper)
+  local moneyDisplay = UI:CreateMoneyDisplay(header)
+  moneyDisplay:SetPoint("RIGHT", header, "RIGHT", -38, 0)
+  UI:UpdateMoneyDisplay(moneyDisplay, GetMoney and GetMoney() or 0)
 
   local divider = UI:CreateDivider(f)
-  divider:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -70)
-  divider:SetPoint("TOPRIGHT", f, "TOPRIGHT", -14, -70)
+  divider:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -68)
+  divider:SetPoint("TOPRIGHT", f, "TOPRIGHT", -14, -68)
 
   -- Close button (small, subtle)
   local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
@@ -156,8 +237,8 @@ function NeatRows:CreateMainFrame()
 
   -- Toolbar
   local toolbar = self:CreateToolbar(f)
-  toolbar:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -78)
-  toolbar:SetPoint("TOPRIGHT", f, "TOPRIGHT", -14, -78)
+  toolbar:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -72)
+  toolbar:SetPoint("TOPRIGHT", f, "TOPRIGHT", -14, -72)
 
   -- Tabs container
   local tabsHost = CreateFrame("Frame", nil, f)
@@ -186,7 +267,7 @@ function NeatRows:CreateMainFrame()
     header = header,
     title = title,
     subtitle = subtitle,
-    moneyText = moneyText,
+    moneyDisplay = moneyDisplay,
     toolbar = toolbar,
     tabsHost = tabsHost,
     scrollFrame = scrollFrame,
@@ -652,12 +733,17 @@ function UI:LayoutGrid(owner, items)
       btn.count:Hide()
     end
 
-    -- Quality border glow
+    -- Quality border color + glow
     if it.quality and it.quality >= 2 then
       local r, g, b = QualityColor(it.quality)
+      btn:SetBackdropBorderColor(r * 0.85, g * 0.85, b * 0.85, 0.95)
       btn.quality:SetVertexColor(r, g, b, 1)
-      btn.quality:SetAlpha(0.55)
+      btn.quality:SetAlpha(it.quality >= 4 and 0.70 or 0.50)
+    elseif it.quality == 1 then
+      btn:SetBackdropBorderColor(0.30, 0.30, 0.30, 0.90)
+      btn.quality:SetAlpha(0.0)
     else
+      btn:SetBackdropBorderColor(0.18, 0.18, 0.18, 0.90)
       btn.quality:SetAlpha(0.0)
     end
 
